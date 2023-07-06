@@ -1,8 +1,8 @@
 import postgres_service as ps
-import tests
+import ssh_tests
 
 def generate_json():
-    tests.connect_to_db()
+    ssh_tests.connect_to_db()
     
 if __name__ == '__main__':
     generate_json()
