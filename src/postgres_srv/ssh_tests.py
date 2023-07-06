@@ -99,7 +99,7 @@ def close_connection_to_db(sess: sqlalchemy.orm.Session):
     sess.close()
 
 
-def execute(sess: sqlalchemy.orm.Session, query: sqlalchemy.TextClause):
+def execute(sess: sqlalchemy.orm.Session, query: sqlalchemy.Text):
     """
     execute sql query
     :param sess: session
