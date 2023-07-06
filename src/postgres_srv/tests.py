@@ -4,10 +4,10 @@ from sqlalchemy import create_engine
 from sqlalchemy import text
 
 with SSHTunnelForwarder(
-    ('46.48.3.74', 22), #Remote server IP and SSH port
+    ("46.48.3.74", 22),
     ssh_username = "serv",
     ssh_password = "12345678",
-    remote_bind_address=('localhost', 5432)) as server: #PostgreSQL server IP and sever port on remote machine
+    remote_bind_address=('localhost', 5432)) as server: 
         
     server.start() #start ssh sever
     print ('Server connected via SSH')
@@ -21,7 +21,7 @@ with SSHTunnelForwarder(
     
     print ('Database session created')
     
-    sql = text('select version()')
+    sql = text('SELECT * FROM "LinkedFaces" WHERE child=73;')
    
     #test data retrieval
     test = session.execute(sql)
