@@ -1,32 +1,82 @@
+import sqlalchemy.orm
+from src.postgres_srv.config import *
 from sshtunnel import SSHTunnelForwarder
-from sqlalchemy.orm import sessionmaker 
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy import text
 
-def connect_to_db():
+
+def get_links_via_ssh(le1: str, le2: str) -> list:
+    """
+    get links between two legal entities
+    :param le1: first legal entity
+    :param le2: second legal entity
+    :return: list of legal entities and individuals
+    """
+    session = connect_to_db()
+
+    result = get_parents(session, le1)
+
+    close_connection_to_db(session)
+
+    return result
+
+
+def connect_to_db() -> sqlalchemy.orm.Session:
     with SSHTunnelForwarder(
-        ("46.48.3.74", 22),
-        ssh_username = "serv",
-        ssh_password = "12345678",
-        remote_bind_address=('localhost', 5432)) as server:
+            (IP_ADDRESS, 22),
+            ssh_username=SSH_USERNAME,
+            ssh_password=SSH_PASSWORD,
+            remote_bind_address=(HOST, SSH_PORT)) as server:
+        server.start()  # start ssh sever
+        print('Server connected via SSH')
 
-        server.start() #start ssh sever
-        print ('Server connected via SSH')
-
-        #connect to PostgreSQL
+        # connect to PostgreSQL
         local_port = str(server.local_bind_port)
-        engine = create_engine('postgresql://postgres:postgres@127.0.0.1:' + local_port +'/postgres')
+        engine = create_engine('postgresql://postgres:postgres@127.0.0.1:' + local_port + '/postgres')
 
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        session_maker = sessionmaker(bind=engine)
+        session = session_maker()
 
-        print ('Database session created')
+        print('Database session created')
 
-        sql = text('SELECT * FROM "LinkedFaces" WHERE child=73;')
+        print(get_parents(session, '73'))
 
-        #test data retrieval
-        test = session.execute(sql)
-        for t in test:
-            print(t)
+        return session
 
-        session.close()
+
+def close_connection_to_db(sess: sqlalchemy.orm.Session):
+    print('Database session closed')
+    sess.close()
+
+
+def execute(sess: sqlalchemy.orm.Session, query: sqlalchemy.TextClause):
+    """
+    execute sql query
+    :param sess: session
+    :param query: sql query
+    :return: query execution results
+    """
+    if sess is None:
+        return None
+
+    try:
+        result = sess.execute(query).fetchall()
+        return result
+    except Exception as e:
+        print(e)
+        return None
+
+
+def get_parents(sess: sqlalchemy.orm.Session, le_id: str) -> list:
+    """
+    get all parents of legal entity
+    :param sess: session
+    :param le_id: id of legal entity
+    :return: array of parent ids
+    """
+    sql = text(f'SELECT parent FROM "{TABLE_NAME}" WHERE child={le_id}')
+    result = execute(sess, sql)
+    if result is not None:
+        return list(map(lambda x: x[0], result))
+    return None
