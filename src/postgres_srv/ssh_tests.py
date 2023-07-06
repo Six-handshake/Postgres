@@ -13,36 +13,36 @@ def get_links_via_ssh(le1: str, le2: str) -> list:
     :param le2: second legal entity
     :return: list of legal entities and individuals
     """
-    session = connect_to_db()
+    with get_ssh_server() as server:
+        server.start()
+        print('Server connected via SSH')
 
-    result = get_parents(session, le1)
+        session = connect_to_db(str(server.local_bind_port))
 
-    close_connection_to_db(session)
+        result = get_parents(session, le1)
 
-    return result
+        close_connection_to_db(session)
+
+        return result
 
 
-def connect_to_db() -> sqlalchemy.orm.Session:
-    with SSHTunnelForwarder(
+def get_ssh_server() -> SSHTunnelForwarder:
+    return SSHTunnelForwarder(
             (IP_ADDRESS, 22),
             ssh_username=SSH_USERNAME,
             ssh_password=SSH_PASSWORD,
-            remote_bind_address=(HOST, SSH_PORT)) as server:
-        server.start()  # start ssh sever
-        print('Server connected via SSH')
+            remote_bind_address=(HOST, SSH_PORT))
 
-        # connect to PostgreSQL
-        local_port = str(server.local_bind_port)
-        engine = create_engine('postgresql://postgres:postgres@127.0.0.1:' + local_port + '/postgres')
 
-        session_maker = sessionmaker(bind=engine)
-        session = session_maker()
+def connect_to_db(local_port: str) -> sqlalchemy.orm.Session:
+    engine = create_engine('postgresql://postgres:postgres@127.0.0.1:' + local_port + '/postgres')
 
-        print('Database session created')
+    session_maker = sessionmaker(bind=engine)
+    session = session_maker()
 
-        print(get_parents(session, '73'))
+    print('Database session created')
 
-        return session
+    return session
 
 
 def close_connection_to_db(sess: sqlalchemy.orm.Session):
