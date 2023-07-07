@@ -43,11 +43,12 @@ def execute(conn, query):
     :return: query execution results
     """
     print(query)
+    print(conn)
     if conn is None:
-        print('conn is none')
         return None
 
     try:
+        print('Trying execute...')
         with conn.cursor as cursor:
             cursor.execute(
                 query
@@ -55,8 +56,10 @@ def execute(conn, query):
             res = cursor.fetchall()
             print(res)
             print(len(res))
+            print('executed!')
             return res
     except Exception as e:
+        print('EXCEPTION!!!!')
         print(e)
         return None
 
