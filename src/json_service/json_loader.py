@@ -1,14 +1,19 @@
+import json
+
 from postgres_srv import get_links_via_ssh
 from postgres_srv import get_links
 
 
-def generate_json():
-    res = get_links_via_ssh('73', '76')
+def generate_json(le1: str, le2: str):
+    res = get_links_via_ssh(le1, le2)
     print_structure(res)
-    return res
+    return json.dumps(res)
 
 
 def print_structure(links: list):
+    if links is None:
+        return
+
     colors = ['\033[95m', '\033[94m', '\033[96m', '\033[92m', '\033[93m', '\033[91m']
     endcolor = '\033[0m'
 
@@ -34,4 +39,4 @@ def print_structure(links: list):
 
 
 if __name__ == '__main__':
-    generate_json()
+    print(generate_json('73', '76'))

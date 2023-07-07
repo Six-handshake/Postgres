@@ -1,5 +1,5 @@
 import sqlalchemy.orm
-from postgres_srv.config import *
+from ..config import *
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
@@ -50,7 +50,7 @@ def close_connection_to_db(sess: sqlalchemy.orm.Session):
     sess.close()
 
 
-def execute(sess: sqlalchemy.orm.Session, query: sqlalchemy.Text):
+def execute(sess: sqlalchemy.orm.Session, query: str):
     """
     execute sql query
     :param sess: session
@@ -61,8 +61,8 @@ def execute(sess: sqlalchemy.orm.Session, query: sqlalchemy.Text):
         return None
 
     try:
-        result = sess.execute(query).fetchall()
-        return result
+        result = sess.execute(text(query)).fetchall()
+        return list(result)
     except Exception as e:
         print(e)
         return None
@@ -89,8 +89,8 @@ def where_in(conn,
     sql_array = sql_subquery_transform(array)
     sql_exclude = sql_subquery_transform(exclude) if exclude is not None and len(exclude) != 0 else None
 
-    sql = text(f'SELECT {target} FROM "{TABLE_NAME}" WHERE ({array_column} IN {sql_array}' +
-               (f' AND {exclude_column} NOT IN {sql_exclude})' if sql_exclude is not None else ')'))
+    sql = f'SELECT {target} FROM "{TABLE_NAME}" WHERE ({array_column} IN {sql_array}' + \
+               (f' AND {exclude_column} NOT IN {sql_exclude})' if sql_exclude is not None else ')')
 
     return execute(conn, sql)
 
@@ -137,7 +137,7 @@ def map_data(data: list, data_order: list, constants=None) -> list:
 
 def get_le_data(conn, le: str, constants=None) -> list:
     return map_data(
-        execute(conn, text(f'SELECT child, parent, kind FROM "{TABLE_NAME}" WHERE child={le}')),
+        execute(conn, f'SELECT child, parent, kind FROM "{TABLE_NAME}" WHERE child={le}'),
         ['child', 'parent', 'kind'],
         constants)
 
@@ -151,9 +151,9 @@ def find_paths(conn, le1: str, le2: str, depth=6):
 
 
 def try_get_links(conn, le1: str, le2: str, depth: int) -> (list, list, int):
-    children = [set() for i in range(depth)]
+    children = [set() for _ in range(depth)]
     children[0] = {le1}
-    parents = [set() for i in range(depth)]
+    parents = [set() for _ in range(depth)]
     current_depth = 0
     while current_depth < depth and le2 not in children[current_depth]:
         parents[current_depth] = get_parents(conn, children[current_depth], parents[current_depth - 1])
@@ -161,7 +161,10 @@ def try_get_links(conn, le1: str, le2: str, depth: int) -> (list, list, int):
         if current_depth - 1 == depth:
             break
 
-        children[current_depth + 1] = get_children(conn, parents[current_depth], children[current_depth])
+        current_children = get_children(conn, parents[current_depth], children[current_depth])
+        children[current_depth + 1] = current_children
+        if current_children is None:
+            return None
         current_depth += 1
 
     if current_depth < depth and le2 in children[current_depth]:

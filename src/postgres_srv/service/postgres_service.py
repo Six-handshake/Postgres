@@ -140,9 +140,9 @@ def find_paths(conn, le1: str, le2: str, depth=6):
 
 
 def try_get_links(conn, le1: str, le2: str, depth: int) -> (list, list, int):
-    children = [set() for i in range(depth)]
+    children = [set() for _ in range(depth)]
     children[0] = {le1}
-    parents = [set() for i in range(depth)]
+    parents = [set() for _ in range(depth)]
     current_depth = 0
     while current_depth < depth and le2 not in children[current_depth]:
         parents[current_depth] = get_parents(conn, children[current_depth], parents[current_depth - 1])
@@ -150,7 +150,10 @@ def try_get_links(conn, le1: str, le2: str, depth: int) -> (list, list, int):
         if current_depth - 1 == depth:
             break
 
-        children[current_depth + 1] = get_children(conn, parents[current_depth], children[current_depth])
+        current_children = get_children(conn, parents[current_depth], children[current_depth])
+        children[current_depth + 1] = current_children
+        if current_children is None:
+            return None
         current_depth += 1
 
     if current_depth < depth and le2 in children[current_depth]:
