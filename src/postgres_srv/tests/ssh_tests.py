@@ -1,5 +1,5 @@
 import sqlalchemy.orm
-from src.postgres_srv.config import *
+from postgres_srv.config import *
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine

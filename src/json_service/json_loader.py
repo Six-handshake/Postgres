@@ -1,8 +1,7 @@
-import src.postgres_srv as ps
-
+from postgres_srv import ssh_tests
 
 def generate_json():
-    print(ps.get_links_via_ssh('73', '76'))
+    print(ssh_tests.get_links_via_ssh('73', '76'))
 
 
 if __name__ == '__main__':
