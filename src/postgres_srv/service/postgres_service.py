@@ -49,7 +49,7 @@ def execute(conn, query):
 
     try:
         print('Trying execute...')
-        with conn.cursor as cursor:
+        with conn.cursor() as cursor:
             print('cursor created')
             cursor.execute(query)
             print('cursor executed')
