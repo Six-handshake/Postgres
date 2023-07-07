@@ -50,19 +50,16 @@ def execute(conn, query):
     try:
         print('Trying execute...')
         with conn.cursor as cursor:
-            cursor.execute(
-                query
-            )
+            print('cursor created')
+            cursor.execute(query)
+            print('cursor executed')
             res = cursor.fetchall()
+            print('cursor fetched')
             print(res)
-            print(len(res))
             print('executed!')
             return res
     except Exception as e:
         print('EXCEPTION!!!!')
-        print(e)
-        print(e)
-        print(e)
         print(e)
         return None
 
