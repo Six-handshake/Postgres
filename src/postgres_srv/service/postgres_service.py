@@ -167,7 +167,6 @@ def backtrack(conn, le1: str, le2: str, children: list, parents: list, depth: in
     children[depth] = {le2}
     depth -= 1
     while depth > 0:
-
         parents[depth] = parents[depth].intersection(get_parents(conn, children[depth + 1], parents[depth + 1]))
 
         order = ['child', 'parent', 'kind']

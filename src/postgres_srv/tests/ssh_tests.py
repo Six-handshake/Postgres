@@ -28,10 +28,10 @@ def get_links_via_ssh(le1: str, le2: str):
 
 def get_ssh_server() -> SSHTunnelForwarder:
     return SSHTunnelForwarder(
-            (IP_ADDRESS, 22),
-            ssh_username=SSH_USERNAME,
-            ssh_password=SSH_PASSWORD,
-            remote_bind_address=(HOST, SSH_PORT))
+        (IP_ADDRESS, 22),
+        ssh_username=SSH_USERNAME,
+        ssh_password=SSH_PASSWORD,
+        remote_bind_address=(HOST, SSH_PORT))
 
 
 def connect_to_db(local_port: str) -> sqlalchemy.orm.Session:
@@ -90,7 +90,7 @@ def where_in(conn,
     sql_exclude = sql_subquery_transform(exclude) if exclude is not None and len(exclude) != 0 else None
 
     sql = f'SELECT {target} FROM "{TABLE_NAME}" WHERE ({array_column} IN {sql_array}' + \
-               (f' AND {exclude_column} NOT IN {sql_exclude})' if sql_exclude is not None else ')')
+          (f' AND {exclude_column} NOT IN {sql_exclude})' if sql_exclude is not None else ')')
 
     return execute(conn, sql)
 
@@ -178,7 +178,6 @@ def backtrack(conn, le1: str, le2: str, children: list, parents: list, depth: in
     children[depth] = {le2}
     depth -= 1
     while depth > 0:
-
         parents[depth] = parents[depth].intersection(get_parents(conn, children[depth + 1], parents[depth + 1]))
 
         order = ['child', 'parent', 'kind']
