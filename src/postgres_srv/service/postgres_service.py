@@ -42,25 +42,15 @@ def execute(conn, query):
     :param query: sql query
     :return: query execution results
     """
-    print(query)
-    print(conn)
     if conn is None:
         return None
 
     try:
-        print('Trying execute...')
         with conn.cursor() as cursor:
-            print('cursor created')
             cursor.execute(query)
-            print('cursor executed')
             res = cursor.fetchall()
-            print('cursor fetched')
-            print(res)
-            print('executed!')
             return res
     except Exception as e:
-        print('EXCEPTION!!!!')
-        print(e)
         return None
 
 
