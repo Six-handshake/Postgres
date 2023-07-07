@@ -72,6 +72,7 @@ def where_in(conn,
              array_column: str,
              exclude=None,
              exclude_column=None) -> list:
+    print('where_in')
     if array is None or len(array) == 0:
         return None
 
@@ -90,6 +91,7 @@ def get_with_filters(conn,
                      array_column: str,
                      exclude=None,
                      exclude_column=None) -> set:
+    print('get_with_filters')
     result = where_in(conn, target_column, array, array_column, exclude, exclude_column)
     if result is None:
         return None
@@ -132,6 +134,7 @@ def get_le_data(conn, le: str, constants=None) -> list:
 
 
 def find_paths(conn, le1: str, le2: str, depth=6):
+    print('find_paths')
     links = try_get_links(conn, le1, le2, depth)
     if links is None:
         return None
@@ -140,6 +143,7 @@ def find_paths(conn, le1: str, le2: str, depth=6):
 
 
 def try_get_links(conn, le1: str, le2: str, depth: int) -> (list, list, int):
+    print('try_get_links')
     children = [set() for _ in range(depth)]
     children[0] = {le1}
     parents = [set() for _ in range(depth)]
@@ -162,6 +166,7 @@ def try_get_links(conn, le1: str, le2: str, depth: int) -> (list, list, int):
 
 
 def backtrack(conn, le1: str, le2: str, children: list, parents: list, depth: int):
+    print('backtrack')
     result = get_le_data(conn, le2, {'depth': depth})
 
     children[depth] = {le2}
