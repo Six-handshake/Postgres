@@ -121,7 +121,7 @@ def get_children(conn, parents_ids: set, exclude=None) -> set:
 def map_data(data: list, data_order: list, constants=None) -> list:
     if constants is None:
         constants = dict()
-    return list(map(lambda x: {**{data_order[i]: x[i] for i in range(len(data_order))}, **constants}, data))
+    return list(map(lambda x: {**{data_order[i]: str(x[i]) for i in range(len(data_order))}, **constants}, data))
 
 
 def get_le_data(conn, le: str, constants=None) -> list:
@@ -168,16 +168,18 @@ def backtrack(conn, le1: str, le2: str, children: list, parents: list, depth: in
         parents[depth] = parents[depth].intersection(get_parents(conn, children[depth + 1], parents[depth + 1]))
 
         order = ['child', 'parent', 'kind']
-        children_data = map_data(
-            where_in(conn, ', '.join(order), parents[depth], 'parent', children[depth + 1], 'child'),
-            order,
-            {'depth': depth})
 
-        children[depth] = children[depth].intersection(set(map(lambda x: x['child'], children_data)))
+        children[depth] = children[depth].intersection(get_children(conn, parents[depth], children[depth + 1]))
+
+        children_data = map_data(
+            where_in(conn, ', '.join(order), children[depth], 'child'),
+            order,
+            {'depth': depth}
+        )
 
         result.extend(children_data)
 
         depth -= 1
 
     result.extend(get_le_data(conn, le1, {'depth': 0}))
-    return reversed(result)
+    return list(reversed(result))
