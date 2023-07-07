@@ -46,7 +46,7 @@ def execute(conn, query):
         return None
 
     try:
-        with conn.crusor as cursor:
+        with conn.cursor as cursor:
             cursor.execute(
                 query
             )
