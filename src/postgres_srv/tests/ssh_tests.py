@@ -19,60 +19,11 @@ def get_links_via_ssh(le1: str, le2: str):
 
         session = connect_to_db(str(server.local_bind_port))
 
-        result = try_get_link(session, le1, le2)
+        result = find_paths(session, le1, le2)
 
         close_connection_to_db(session)
 
         return result
-
-
-def try_get_link(session: sqlalchemy.orm.Session, le1: str, le2: str, depth=6):
-    children = [set() for i in range(depth)]
-    children[0] = {le1}
-    parents = [set() for i in range(depth)]
-    current_depth = 0
-    while current_depth < depth and le2 not in children[current_depth]:
-        parents[current_depth] = get_parents(session, children[current_depth], parents[current_depth - 1])
-
-        if current_depth - 1 == depth:
-            break
-
-        children[current_depth + 1] = get_children(session, parents[current_depth], children[current_depth])
-        current_depth += 1
-
-    if current_depth < depth and le2 in children[current_depth]:
-        return map_children(session, backtrack(session, le2, children, parents, current_depth))
-    return None
-
-
-def backtrack(session: sqlalchemy.orm.Session, le2: str, children: list, parents: list, depth: int):
-    children[depth] = {le2}
-    depth -= 1
-    while depth > 0:
-
-        parents[depth] = parents[depth].intersection(get_parents(session, children[depth + 1], parents[depth + 1]))
-        children[depth] = children[depth].intersection(get_children(session, parents[depth], children[depth + 1]))
-
-        depth -= 1
-    return children
-
-
-def map_children(sess: sqlalchemy.orm.Session, children_per_depth: list):
-    result = []
-    for depth, children in enumerate(children_per_depth):
-        if len(children) == 0:
-            break
-
-        result.extend(list(map(
-            lambda x: {
-                "pk": x[0],
-                "parent": x[1],
-                "kind": x[2],
-                "depth": depth
-            },
-            execute(sess, text(f'SELECT child, parent, kind FROM "{TABLE_NAME}" WHERE child IN {sql_subquery_transform(children)}'))
-        )))
-    return result
 
 
 def get_ssh_server() -> SSHTunnelForwarder:
@@ -126,45 +77,118 @@ def sql_subquery_transform(array: set) -> str:
     return '(' + ', '.join(array) + ')'
 
 
-def where_in(sess: sqlalchemy.orm.Session,
-             target_column: str,
+def where_in(conn,
+             target: str,
              array: set,
              array_column: str,
              exclude=None,
-             exclude_column=None) -> set:
+             exclude_column=None) -> list:
     if array is None or len(array) == 0:
         return None
 
     sql_array = sql_subquery_transform(array)
     sql_exclude = sql_subquery_transform(exclude) if exclude is not None and len(exclude) != 0 else None
 
-    sql = text(f'SELECT {target_column} FROM "{TABLE_NAME}" WHERE ({array_column} IN {sql_array}' +
+    sql = text(f'SELECT {target} FROM "{TABLE_NAME}" WHERE ({array_column} IN {sql_array}' +
                (f' AND {exclude_column} NOT IN {sql_exclude})' if sql_exclude is not None else ')'))
 
-    result = execute(sess, sql)
-    if result is not None:
-        return set(map(lambda x: str(x[0]), result))
-
-    return None
+    return execute(conn, sql)
 
 
-def get_parents(sess: sqlalchemy.orm.Session, le_ids: set, exclude=None) -> set:
+def get_with_filters(conn,
+                     target_column: str,
+                     array: set,
+                     array_column: str,
+                     exclude=None,
+                     exclude_column=None) -> set:
+    result = where_in(conn, target_column, array, array_column, exclude, exclude_column)
+    if result is None:
+        return None
+    return set(map(lambda x: str(x[0]), result))
+
+
+def get_parents(conn, le_ids: set, exclude=None) -> set:
     """
     get all parents of legal entity array
-    :param sess: session
+    :param conn: connection
     :param le_ids: list of ids of legal entity
     :param exclude: list of parents that should be excluded
     :return: array of parent ids
     """
-    return where_in(sess, 'parent', le_ids, 'child', exclude, 'parent')
+    return get_with_filters(conn, 'parent', le_ids, 'child', exclude, 'parent')
 
 
-def get_children(sess: sqlalchemy.orm.Session, parents_ids: set, exclude=None) -> set:
+def get_children(conn, parents_ids: set, exclude=None) -> set:
     """
     get all children of parents array
-    :param sess: session
+    :param conn: connection
     :param parents_ids: list of parents
     :param exclude: list of children that should be excluded
     :return: array of parent ids
     """
-    return where_in(sess, 'child', parents_ids, 'parent', exclude, 'child')
+    return get_with_filters(conn, 'child', parents_ids, 'parent', exclude, 'child')
+
+
+def map_data(data: list, data_order: list, constants=None) -> list:
+    if constants is None:
+        constants = dict()
+    return list(map(lambda x: {**{data_order[i]: x[i] for i in range(len(data_order))}, **constants}, data))
+
+
+def get_le_data(conn, le: str, constants=None) -> list:
+    return map_data(
+        execute(conn, text(f'SELECT child, parent, kind FROM "{TABLE_NAME}" WHERE child={le}')),
+        ['child', 'parent', 'kind'],
+        constants)
+
+
+def find_paths(conn, le1: str, le2: str, depth=6):
+    links = try_get_links(conn, le1, le2, depth)
+    if links is None:
+        return None
+    children, parents, depth = links
+    return backtrack(conn, le1, le2, children, parents, depth)
+
+
+def try_get_links(conn, le1: str, le2: str, depth: int) -> (list, list, int):
+    children = [set() for i in range(depth)]
+    children[0] = {le1}
+    parents = [set() for i in range(depth)]
+    current_depth = 0
+    while current_depth < depth and le2 not in children[current_depth]:
+        parents[current_depth] = get_parents(conn, children[current_depth], parents[current_depth - 1])
+
+        if current_depth - 1 == depth:
+            break
+
+        children[current_depth + 1] = get_children(conn, parents[current_depth], children[current_depth])
+        current_depth += 1
+
+    if current_depth < depth and le2 in children[current_depth]:
+        return children, parents, current_depth
+    return None
+
+
+def backtrack(conn, le1: str, le2: str, children: list, parents: list, depth: int):
+    result = get_le_data(conn, le2, {'depth': depth})
+
+    children[depth] = {le2}
+    depth -= 1
+    while depth > 0:
+
+        parents[depth] = parents[depth].intersection(get_parents(conn, children[depth + 1], parents[depth + 1]))
+
+        order = ['child', 'parent', 'kind']
+        children_data = map_data(
+            where_in(conn, ', '.join(order), parents[depth], 'parent', children[depth + 1], 'child'),
+            order,
+            {'depth': depth})
+
+        children[depth] = children[depth].intersection(set(map(lambda x: x['child'], children_data)))
+
+        result.extend(children_data)
+
+        depth -= 1
+
+    result.extend(get_le_data(conn, le1, {'depth': 0}))
+    return list(reversed(result))

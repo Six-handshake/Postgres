@@ -173,7 +173,7 @@ def backtrack(conn, le1: str, le2: str, children: list, parents: list, depth: in
             order,
             {'depth': depth})
 
-        children[depth] = children[depth].intersection(set(map(lambda x: x['pk'], children_data)))
+        children[depth] = children[depth].intersection(set(map(lambda x: x['child'], children_data)))
 
         result.extend(children_data)
 
