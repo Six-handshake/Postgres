@@ -52,6 +52,7 @@ def execute(conn, query):
                 query
             )
             res = cursor.fetchall()
+            print(res)
             return res
     except Exception as e:
         print(e)
