@@ -53,6 +53,7 @@ def execute(conn, query):
             )
             res = cursor.fetchall()
             print(res)
+            print(len(res))
             return res
     except Exception as e:
         print(e)
