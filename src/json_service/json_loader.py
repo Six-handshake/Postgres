@@ -1,7 +1,8 @@
 from postgres_srv import ssh_tests
+from postgres_srv import get_links
 
 def generate_json():
-    print(ssh_tests.get_links_via_ssh('73', '76'))
+    print(get_links('73', '76'))
 
 
 if __name__ == '__main__':
