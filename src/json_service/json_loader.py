@@ -1,7 +1,7 @@
 import json
 
-from ..postgres_srv import get_links_via_ssh
-from ..postgres_srv import get_links
+from Postgres.src.postgres_srv import get_links_via_ssh
+from Postgres.src.postgres_srv import get_links
 
 
 def generate_json(le1: str, le2: str):
