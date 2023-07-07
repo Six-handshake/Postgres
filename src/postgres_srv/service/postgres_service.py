@@ -44,6 +44,7 @@ def execute(conn, query):
     """
     print(query)
     if conn is None:
+        print('conn is none')
         return None
 
     try:
