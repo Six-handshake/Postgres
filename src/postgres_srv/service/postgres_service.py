@@ -61,6 +61,9 @@ def execute(conn, query):
     except Exception as e:
         print('EXCEPTION!!!!')
         print(e)
+        print(e)
+        print(e)
+        print(e)
         return None
 
 
