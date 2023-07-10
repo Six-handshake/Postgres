@@ -1,10 +1,18 @@
 import sqlalchemy.orm
-from ..config import *
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy import text
+import os
+from dotenv import load_dotenv, dotenv_values
 
+load_dotenv()
+HOST = os.getenv('HOST')
+IP_ADDRESS = os.getenv('IP_ADDRESS')
+SSH_PORT = int(os.getenv('PORT'))
+SSH_USERNAME = os.getenv('SSH_USERNAME')
+SSH_PASSWORD = os.getenv('SSH_PASSWORD')
+TABLE_NAME = os.getenv('TABLE_NAME')
 
 def get_links_via_ssh(le1: str, le2: str):
     """

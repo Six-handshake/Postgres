@@ -5,8 +5,9 @@ from postgres_srv import get_links
 
 
 def generate_json(le1: str, le2: str):
-    res = get_links(le1, le2)
-    # print_structure(res)
+    #res = get_links(le1, le2)
+    res = get_links_via_ssh(le1, le2)
+    print_structure(res)
     return json.dumps(res)
 
 

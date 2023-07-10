@@ -1,5 +1,11 @@
 import psycopg2 as pg
-from ..config import *
+import os
+
+HOST = os.getenv('HOST')
+USER = os.getenv('USER')
+PORT = os.getenv('PORT')
+PASSWORD = os.getenv('PASSWORD')
+DB_NAME = os.getenv('DB_NAME')
 
 
 def get_links(le1: str, le2: str):
