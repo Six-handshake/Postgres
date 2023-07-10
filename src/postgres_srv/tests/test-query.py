@@ -2,7 +2,16 @@ from sshtunnel import SSHTunnelForwarder
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy import text
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+HOST = os.getenv('HOST')
+IP_ADDRESS = os.getenv('IP_ADDRESS')
+SSH_PORT = int(os.getenv('PORT'))
+SSH_USERNAME = os.getenv('SSH_USERNAME')
+SSH_PASSWORD = os.getenv('SSH_PASSWORD')
+TABLE_NAME = os.getenv('TABLE_NAME')
 
 graph1 = {
         '73': ['188', '185'],
@@ -30,10 +39,10 @@ draft_graph = [
 
 def test_connection():
     with SSHTunnelForwarder(
-            ('46.48.3.74', 22),  # Remote server IP and SSH port
-            ssh_username="serv",
-            ssh_password="12345678",
-            remote_bind_address=('localhost', 5332)) as server:  # PostgreSQL server IP and sever port on remote machine
+            (IP_ADDRESS, 22),  # Remote server IP and SSH port
+            ssh_username=SSH_USERNAME,
+            ssh_password=SSH_PASSWORD,
+            remote_bind_address=(IP_ADDRESS, SSH_PORT)) as server:  # PostgreSQL server IP and sever port on remote machine
 
         server.start()  # start ssh sever
         print('Server connected via SSH')
@@ -45,7 +54,7 @@ def test_connection():
         session = Session()
 
         print('Database session created')
-        sql = text(f'select * from "LinkedFaces" Where parent=185')
+        sql = text(f'select * from "LinkedFaces" Where parent=17')
         query_result = session.execute(sql)
         for q in query_result:
             print(q)
