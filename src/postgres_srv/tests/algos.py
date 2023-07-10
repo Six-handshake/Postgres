@@ -45,10 +45,10 @@ def test_connection():
         session = Session()
 
         print('Database session created')
-        graph = NeighboursGraph(session)
+        graph = BFSGraph(session)
         depth = 0
-        pprint.pprint(graph.find_children(73,depth))
-
+        pprint.pprint(graph.find_children(73))
+        pprint.pprint(graph.graph)
 
 
 
@@ -88,9 +88,8 @@ class RelationsGraph:
         query_result = self.session.execute(sql)
         return query_result
 
-class NeighboursGraph:
+class RecursiveGraph:
     graph = {
-        0: [],
         1: [],
         2: [],
         3: [],
@@ -129,17 +128,71 @@ class NeighboursGraph:
         depth += 1
         queue.append(self.make_starting_entity(le))
         while queue:
-            print(queue)
             current_entity = queue.pop()
             self.graph[depth].append(current_entity)
             if current_entity['children'] is not None and depth < 6:
                 for child in current_entity['children']:
                     self.find_children(child, depth)
-            else:
-                print(current_entity)
 
 
         return self.graph
+
+class BFSGraph:
+    graph = {
+        1: [],
+        2: [],
+        3: [],
+        4: [],
+        5: [],
+        6: []
+    }
+
+    def __init__(self, session):
+        self.session = session
+
+
+    def construct_entity(self, le, query_result):
+        entity = {
+            'legal_entity': le,
+            'children': []
+        }
+        for r in query_result:
+            entity['children'].append(r[2])
+
+        return entity
+
+    def execute_query(self, le):
+        sql = text(f'select * from "LinkedFaces" Where parent={le}')
+        query_result = self.session.execute(sql)
+        return query_result
+
+    def make_starting_entity(self, le):
+        query_result = self.execute_query(le)
+        starting_point = self.construct_entity(le, query_result)
+        return starting_point
+
+    def find_children(self,le):
+        queue = []
+        queue.append(self.make_starting_entity(le)['children'])
+        self.graph[1].append(self.make_starting_entity(le))
+        while queue:
+            #print(queue)
+            children = queue.pop(0)
+            node = children[-1]
+            for child in children:
+                self.graph[len(children)].append(child)
+
+            query = self.execute_query(node)
+            new_children = self.construct_entity(node, query)['children']
+
+            for child in new_children:
+                new_path = list(children)
+                new_path.append(child)
+
+                if len(new_path) == 6:
+                    break
+                queue.append(new_path)
+        return node
 
 if __name__ == '__main__':
     test_connection()
