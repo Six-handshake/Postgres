@@ -1,12 +1,14 @@
 import psycopg2 as pg
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 HOST = os.getenv('HOST')
 USER = os.getenv('USER')
-PORT = os.getenv('PORT')
+PORT = int(os.getenv('PORT'))
 PASSWORD = os.getenv('PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
-
+TABLE_NAME = os.getenv('TABLE_NAME')
 
 def get_links(le1: str, le2: str):
     conn = connect_to_db()
