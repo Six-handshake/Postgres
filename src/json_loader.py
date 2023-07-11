@@ -1,12 +1,12 @@
 import json
 
-from postgres_srv import get_links_via_ssh
-from postgres_srv import get_links
+from ssh_tests import get_links_via_ssh
+from postgres_service import get_links
 
 
 def generate_json(le1: str, le2: str):
     res = get_links(le1, le2)
-    # print_structure(res)
+    # res = get_links_via_ssh(le1, le2)
     return json.dumps(res)
 
 
@@ -36,7 +36,3 @@ def print_structure(links: list):
     current_depth += 1
     for le in les:
         print(f'{le}: {", ".join(map(lambda x: colors[current_depth % len(colors)] + x + endcolor if x in prev_parents else x, les[le]))}')
-
-
-if __name__ == '__main__':
-    print(generate_json('73', '76'))

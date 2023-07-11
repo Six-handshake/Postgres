@@ -1,56 +1,80 @@
-import psycopg2 as pg
-from ..config import *
+import sqlalchemy.orm
+from sshtunnel import SSHTunnelForwarder
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy import text
+import os
+from dotenv import load_dotenv
 
 
-def get_links(le1: str, le2: str):
-    conn = connect_to_db()
-
-    data = find_paths(conn, le1, le2)
-
-    close_connection(conn)
-
-    return data
-
-
-def connect_to_db():
-    connection = None
-    try:
-        connection = pg.connect(
-            host=HOST,
-            user=USER,
-            port=PORT,
-            password=PASSWORD,
-            dbname=DB_NAME
-        )
-    except Exception as error:
-        print(error)
-        return None
-    finally:
-        print('connected to database')
-        return connection
+load_dotenv()
+HOST = os.getenv('HOST')
+IP_ADDRESS = os.getenv('IP_ADDRESS')
+SSH_PORT = int(os.getenv('PORT'))
+SSH_USERNAME = os.getenv('SSH_USERNAME')
+SSH_PASSWORD = os.getenv('SSH_PASSWORD')
+TABLE_NAME = os.getenv('TABLE_NAME')
 
 
-def close_connection(conn):
-    print('connection closed')
-    conn.close()
+def get_links_via_ssh(le1: str, le2: str):
+    """
+    get links between two legal entities
+    :param le1: first legal entity
+    :param le2: second legal entity
+    :return: list of legal entities and individuals
+    """
+    with get_ssh_server() as server:
+        server.start()
+        print('Server connected via SSH')
+
+        session = connect_to_db(str(server.local_bind_port))
+
+        result = find_paths(session, le1, le2)
+
+        close_connection_to_db(session)
+
+        return result
 
 
-def execute(conn, query):
+def get_ssh_server() -> SSHTunnelForwarder:
+    return SSHTunnelForwarder(
+        (IP_ADDRESS, 22),
+        ssh_username=SSH_USERNAME,
+        ssh_password=SSH_PASSWORD,
+        remote_bind_address=(HOST, SSH_PORT))
+
+
+def connect_to_db(local_port: str) -> sqlalchemy.orm.Session:
+    engine = create_engine('postgresql://postgres:postgres@127.0.0.1:' + local_port + '/postgres')
+
+    session_maker = sessionmaker(bind=engine)
+    session = session_maker()
+
+    print('Database session created')
+
+    return session
+
+
+def close_connection_to_db(sess: sqlalchemy.orm.Session):
+    print('Database session closed')
+    sess.close()
+
+
+def execute(sess: sqlalchemy.orm.Session, query: str):
     """
     execute sql query
-    :param conn: connection
+    :param sess: session
     :param query: sql query
     :return: query execution results
     """
-    if conn is None:
+    if sess is None:
         return None
 
     try:
-        with conn.cursor() as cursor:
-            cursor.execute(query)
-            res = cursor.fetchall()
-            return res
+        result = sess.execute(text(query)).fetchall()
+        return list(result)
     except Exception as e:
+        print(e)
         return None
 
 
