@@ -54,7 +54,7 @@ def test_connection():
         session = Session()
 
         print('Database session created')
-        sql = text(f'select * from "LinkedFaces" Where child=73')
+        sql = text(f'select * from "LinkedFaces" Where parent=73')
         query_result = session.execute(sql)
         for q in query_result:
             print(q)

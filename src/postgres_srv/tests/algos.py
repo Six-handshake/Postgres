@@ -3,6 +3,17 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy import text
 import pprint
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+HOST = os.getenv('HOST')
+IP_ADDRESS = os.getenv('IP_ADDRESS')
+SSH_PORT = int(os.getenv('PORT'))
+SSH_USERNAME = os.getenv('SSH_USERNAME')
+SSH_PASSWORD = os.getenv('SSH_PASSWORD')
+TABLE_NAME = os.getenv('TABLE_NAME')
+
 
 graph1 = {
         '73': ['188', '185'],
@@ -33,7 +44,7 @@ def test_connection():
             (IP_ADDRESS, 22),  # Remote server IP and SSH port
             ssh_username=SSH_USERNAME,
             ssh_password=SSH_PASSWORD,
-            remote_bind_address=('localhost', PORT)) as server:  # PostgreSQL server IP and sever port on remote machine
+            remote_bind_address=('localhost', SSH_PORT)) as server:  # PostgreSQL server IP and sever port on remote machine
 
         server.start()  # start ssh sever
         print('Server connected via SSH')
@@ -161,36 +172,46 @@ class BFSGraph:
 
         return entity
 
+    def construct_entity_start(self, le, query_result):
+        entity = {
+            'legal_entity': le,
+            'children': []
+        }
+        for r in query_result:
+            entity['children'].append(r[1])
+
+        return entity
+
     def execute_query(self, le):
         sql = text(f'select * from "LinkedFaces" Where parent={le}')
         query_result = self.session.execute(sql)
         return query_result
 
     def make_starting_entity(self, le):
-        query_result = self.execute_query(le)
-        starting_point = self.construct_entity(le, query_result)
-        return starting_point
+        sql = text(f'select * from "LinkedFaces" Where child={le}')
+        query_result = self.session.execute(sql)
+        start = self.construct_entity_start(le, query_result)
+        return start
 
     def find_children(self,le):
         queue = []
-        queue.append([le])
 
-        #self.graph[1].append(self.make_starting_entity(le))
+        #start = self.make_starting_entity(le)['children']
+        #print(start)
+        queue.append([le])
 
         while queue:
             children = queue.pop(0)
             print(children)
             node = children[-1]
-
+            print(node)
             self.graph[len(children)].append(node)
             pprint.pprint(self.graph)
             if len(children) == 6:
-                print('a')
                 break
 
             query = self.execute_query(node)
             new_children = self.construct_entity(node, query)['children']
-
 
             for child in new_children:
                 new_path = list(children)
