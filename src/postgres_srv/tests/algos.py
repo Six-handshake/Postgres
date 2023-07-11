@@ -30,10 +30,10 @@ draft_graph = [
 
 def test_connection():
     with SSHTunnelForwarder(
-            ('46.48.3.74', 22),  # Remote server IP and SSH port
-            ssh_username="serv",
-            ssh_password="12345678",
-            remote_bind_address=('localhost', 5332)) as server:  # PostgreSQL server IP and sever port on remote machine
+            (IP_ADDRESS, 22),  # Remote server IP and SSH port
+            ssh_username=SSH_USERNAME,
+            ssh_password=SSH_PASSWORD,
+            remote_bind_address=('localhost', PORT)) as server:  # PostgreSQL server IP and sever port on remote machine
 
         server.start()  # start ssh sever
         print('Server connected via SSH')
@@ -173,26 +173,30 @@ class BFSGraph:
 
     def find_children(self,le):
         queue = []
-        queue.append(self.make_starting_entity(le)['children'])
-        self.graph[1].append(self.make_starting_entity(le))
+        queue.append([le])
+
+        #self.graph[1].append(self.make_starting_entity(le))
+
         while queue:
-            #print(queue)
             children = queue.pop(0)
+            print(children)
             node = children[-1]
-            for child in children:
-                self.graph[len(children)].append(child)
+
+            self.graph[len(children)].append(node)
+            pprint.pprint(self.graph)
+            if len(children) == 6:
+                print('a')
+                break
 
             query = self.execute_query(node)
             new_children = self.construct_entity(node, query)['children']
 
+
             for child in new_children:
                 new_path = list(children)
                 new_path.append(child)
-
-                if len(new_path) == 6:
-                    break
                 queue.append(new_path)
-        return node
+
 
 if __name__ == '__main__':
     test_connection()

@@ -42,7 +42,7 @@ def test_connection():
             (IP_ADDRESS, 22),  # Remote server IP and SSH port
             ssh_username=SSH_USERNAME,
             ssh_password=SSH_PASSWORD,
-            remote_bind_address=(IP_ADDRESS, SSH_PORT)) as server:  # PostgreSQL server IP and sever port on remote machine
+            remote_bind_address=(HOST, SSH_PORT)) as server:  # PostgreSQL server IP and sever port on remote machine
 
         server.start()  # start ssh sever
         print('Server connected via SSH')
@@ -54,7 +54,7 @@ def test_connection():
         session = Session()
 
         print('Database session created')
-        sql = text(f'select * from "LinkedFaces" Where parent=17')
+        sql = text(f'select * from "LinkedFaces" Where child=73')
         query_result = session.execute(sql)
         for q in query_result:
             print(q)
