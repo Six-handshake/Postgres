@@ -20,7 +20,10 @@ def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (lis
         if current_depth - 1 == depth:
             break
 
-        current_children = get_children(executor, parents[current_depth], children[current_depth])
+        parents_with_children = set()
+        parents_with_children.update(parents[current_depth])
+        parents_with_children.update(children[current_depth])
+        current_children = get_children(executor, parents_with_children, children[current_depth])
         children[current_depth + 1] = current_children
         if current_children is None:
             return None
@@ -37,9 +40,12 @@ def backtrack(executor: SqlExecutor, order: list, le1: str, le2: str, children: 
     children[depth] = {le2}
     depth -= 1
     while depth > 0:
-        parents[depth] = parents[depth].intersection(get_parents(executor, children[depth + 1], parents[depth + 1]))
+        current_parents = get_parents(executor, children[depth + 1], parents[depth + 1])
+        parents[depth] = parents[depth].intersection(current_parents)
 
-        children[depth] = children[depth].intersection(get_children(executor, parents[depth], children[depth + 1]))
+        current_children = get_children(executor, parents[depth], children[depth + 1])
+        current_parents.update(current_children)
+        children[depth] = children[depth].intersection(current_parents)
 
         children_data = map_data(
             executor.where_in(', '.join(order), 'child', children[depth]),
