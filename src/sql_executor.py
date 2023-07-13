@@ -39,20 +39,39 @@ class SqlExecutor:
 
         return self.where(select_columns, f'{target_column} IN {sql_array}')
 
+    def where_in_with_cond(self,
+                           select_columns: str,
+                           target_column: str,
+                           target_array,
+                           cond: str):
+        target_sql = SqlExecutor.array_to_sql_array(target_array)
+
+        if target_sql is None:
+            return None
+
+        return self.where(select_columns, f'({target_column} IN {target_sql} AND {cond})')
+
+    def where_in_with_one_cond(self,
+                               select_columns: str,
+                               target_column: str,
+                               target_array,
+                               cond_column: str,
+                               cond_value: str,
+                               cond_op='='):
+
+        cond = f'{cond_column}{cond_op}{cond_value}'
+
+        return self.where_in_with_cond(select_columns, target_column, target_array, cond)
+
     def where_in_with_exclude(self,
                               select: str,
                               target_column: str,
                               target_array,
                               exclude_column=None,
                               exclude_array=None):
-        target_sql = SqlExecutor.array_to_sql_array(target_array)
-
-        if target_sql is None:
-            return None
-
         exclude_sql = SqlExecutor.array_to_sql_array(exclude_array)
 
-        clause = f'({target_column} in {target_sql}' + \
-                 (f' AND {exclude_column} NOT IN {exclude_sql})'
-                  if exclude_column is not None and exclude_sql is not None else ')')
-        return self.where(select, clause)
+        if exclude_column is None or exclude_sql is None:
+            return self.where_in(select, target_column, target_array)
+
+        return self.where_in_with_one_cond(select, target_column, target_array, exclude_column, exclude_sql, ' NOT IN ')

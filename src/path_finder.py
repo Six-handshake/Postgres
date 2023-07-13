@@ -20,9 +20,7 @@ def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (lis
         if current_depth - 1 == depth:
             break
 
-        parents_with_children = set()
-        parents_with_children.update(parents[current_depth])
-        parents_with_children.update(children[current_depth])
+        parents_with_children = merge_sets(parents[current_depth], children[current_depth])
         current_children = get_children(executor, parents_with_children, children[current_depth])
         children[current_depth + 1] = current_children
         if current_children is None:
@@ -39,6 +37,7 @@ def backtrack(executor: SqlExecutor, order: list, le1: str, le2: str, children: 
 
     children[depth] = {le2}
     depth -= 1
+    filter_cond = lambda p: f'(kind=2 OR parent IN {SqlExecutor.array_to_sql_array(p)})'
     while depth > 0:
         current_parents = get_parents(executor, children[depth + 1], parents[depth + 1])
         parents[depth] = parents[depth].intersection(current_parents)
@@ -47,8 +46,9 @@ def backtrack(executor: SqlExecutor, order: list, le1: str, le2: str, children: 
         current_parents.update(current_children)
         children[depth] = children[depth].intersection(current_parents)
 
+        common_parents = merge_sets(parents[depth], parents[depth - 1])
         children_data = map_data(
-            executor.where_in(', '.join(order), 'child', children[depth]),
+            executor.where_in_with_cond(', '.join(order), 'child', children[depth], filter_cond(common_parents)),
             order,
             {'depth': depth}
         )
@@ -106,3 +106,13 @@ def get_le_data(executor: SqlExecutor, select: list, le: str, constants=None) ->
         executor.where(', '.join(select), f'child={le}'),
         select,
         constants)
+
+
+def merge_sets(set1: set, set2: set) -> set:
+    if set1 is None or set2 is None:
+        return None
+
+    set3 = set()
+    set3.update(set1)
+    set3.update(set2)
+    return set3
