@@ -160,3 +160,4 @@ cython_debug/
 .idea/
 
 src/postgres_srv/config.py
+src/postgres_srv/tests/test-query.py
