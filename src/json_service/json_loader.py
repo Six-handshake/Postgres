@@ -40,4 +40,4 @@ def print_structure(links: list):
 
 
 if __name__ == '__main__':
-    print(generate_json('73', '713'))
+    print(generate_json('73', '991'))

@@ -1,3 +1,5 @@
+import time
+
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
@@ -54,11 +56,15 @@ def test_connection():
         session = Session()
 
         print('Database session created')
-        sql = text(f'select * from "LinkedFaces" Where parent=73')
+        st = time.time()
+        sql = text(f'SELECT * FROM "LinkedFaces" where parent=275')
+
         query_result = session.execute(sql)
         for q in query_result:
             print(q)
+        end = time.time()
 
+        print(f'Elapsed time {end-st}')
         session.close()
 
 

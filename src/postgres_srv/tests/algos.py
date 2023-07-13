@@ -58,7 +58,7 @@ def test_connection():
         print('Database session created')
         graph = BFSGraph(session)
         depth = 0
-        pprint.pprint(graph.find_children(73))
+        pprint.pprint(graph.find_children(73,991))
         pprint.pprint(graph.graph)
 
 
@@ -193,21 +193,23 @@ class BFSGraph:
         start = self.construct_entity_start(le, query_result)
         return start
 
-    def find_children(self,le):
+    def find_children(self,le1,le2):
         queue = []
 
         #start = self.make_starting_entity(le)['children']
         #print(start)
-        queue.append([le])
+        queue.append([le1])
 
         while queue:
             children = queue.pop(0)
-            print(children)
+            #print(children)
             node = children[-1]
-            print(node)
+            #print(node)
             self.graph[len(children)].append(node)
             pprint.pprint(self.graph)
-            if len(children) == 6:
+
+            if len(children) == 6 or node==le2:
+                print(children)
                 break
 
             query = self.execute_query(node)
