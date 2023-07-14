@@ -14,25 +14,28 @@ def print_structure(links: list):
     if links is None:
         return
 
-    colors = ['\033[95m', '\033[94m', '\033[96m', '\033[92m', '\033[93m', '\033[91m']
-    endcolor = '\033[0m'
-
-    prev_parents = []
     current_depth = -1
     les = dict()
     for e in links:
         if e['depth'] != current_depth:
             current_depth = e['depth']
-            current_parents = []
-            for le in les:
-                current_parents.extend(les[le])
-                print(f'{le}: {", ".join(map(lambda x: colors[current_depth % len(colors)] + x + endcolor if x in prev_parents else x, les[le]))}')
+            print_children(les, current_depth)
             les = dict()
-            prev_parents = current_parents
             print(f'\n\nDepth: {current_depth}\n')
         if e['child'] not in les:
             les[e['child']] = []
-        les[e['child']].append(e['parent'])
+        les[e['child']].append(e)
     current_depth += 1
-    for le in les:
-        print(f'{le}: {", ".join(map(lambda x: colors[current_depth % len(colors)] + x + endcolor if x in prev_parents else x, les[le]))}')
+    print_children(les, current_depth)
+
+
+def print_children(d: dict, current_depth):
+    colors = ['\033[95m', '\033[94m', '\033[96m', '\033[92m', '\033[93m', '\033[91m']
+    endcolor = '\033[0m'
+
+    for le in d:
+        print(f'{le}: ' + ", ".join(
+            map(lambda x: colors[current_depth % len(colors)] + x['parent'] + (
+                '(p)' if x['links'][0]['type'] == 'parent' else '(c)') +
+                          endcolor if len(x['links']) else x['parent'],
+                d[le])))

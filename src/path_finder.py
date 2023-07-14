@@ -6,7 +6,8 @@ def find_paths(executor: SqlExecutor, result_columns: list, le1: str, le2: str, 
     if links is None:
         return None
     children, parents, depth = links
-    return backtrack(executor, result_columns, le1, le2, children, parents, depth)
+    result = backtrack(executor, result_columns, le1, le2, children, parents, depth)
+    return link_objects(result)
 
 
 def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (list, list, int):
@@ -120,3 +121,34 @@ def merge_sets(set1: set, set2: set) -> set:
     set3.update(set1)
     set3.update(set2)
     return set3
+
+
+def link_objects(objects: list):
+    if objects is None or len(objects) == 0:
+        return objects
+
+    p_name = 'links'
+    depth_id = {0: 0}
+
+    current_depth = 0
+    for i, e in enumerate(objects):
+        if e['depth'] != current_depth:
+            current_depth = e['depth']
+            depth_id[current_depth] = i
+
+        e[p_name] = []
+        if current_depth == 0:
+            continue
+
+        for j in range(depth_id[current_depth - 1], depth_id[current_depth]):
+            possible_ancestor = objects[j]
+            if e['parent'] not in [possible_ancestor['child'], possible_ancestor['parent']]:
+                continue
+            e[p_name].append({
+                'child_id': possible_ancestor['child'],
+                'object_id': j,
+                'type': 'child' if possible_ancestor['child'] == e['parent'] else 'parent'
+            })
+
+    return objects
+
