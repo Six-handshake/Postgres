@@ -48,7 +48,11 @@ def backtrack(executor: SqlExecutor, order: list, le1: str, le2: str, children: 
 
         common_parents = merge_sets(parents[depth], parents[depth - 1])
         children_data = map_data(
-            executor.where_in(order, 'child', children[depth]).where_raw(filter_cond(common_parents)).execute(),
+            executor
+                .where_in(order, 'child', children[depth])
+                .where_raw(filter_cond(common_parents))
+                .order_by('share')
+                .execute(),
             order,
             {'depth': depth}
         )
@@ -103,7 +107,7 @@ def map_data(data: list, data_order: list, constants=None) -> list:
 
 def get_le_data(executor: SqlExecutor, select: list, le: str, constants=None) -> list:
     return map_data(
-        executor.select(select).where('child', '=', le).execute(),
+        executor.select(select).where('child', '=', le).order_by('share').execute(),
         select,
         constants)
 
