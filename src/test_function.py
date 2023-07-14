@@ -4,6 +4,6 @@ import json
 
 
 if __name__ == '__main__':
-    res = json.loads(generate_json('73', '905'))
+    res = json.loads(generate_json('73', '703'))
     print_structure(res)
     print(res)

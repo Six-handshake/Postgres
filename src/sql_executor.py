@@ -112,5 +112,6 @@ class SqlBuilder:
               (f' ORDER BY {self._order_by}' if self._order_by is not None else '') + \
               (f' LIMIT {self._limit}' if self._limit is not None else '')
 
+        print(sql)
         return self._executor.raw_sql(sql)
 

@@ -18,7 +18,7 @@ def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (lis
     while current_depth < depth and le2 not in children[current_depth]:
         parents[current_depth] = get_parents(executor, children[current_depth], parents[current_depth - 1])
 
-        if current_depth - 1 == depth:
+        if current_depth + 1 == depth:
             break
 
         parents_with_children = merge_sets(parents[current_depth], children[current_depth])
