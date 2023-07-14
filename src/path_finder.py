@@ -48,7 +48,7 @@ def backtrack(executor: SqlExecutor, order: list, le1: str, le2: str, children: 
 
         common_parents = merge_sets(parents[depth], parents[depth - 1])
         children_data = map_data(
-            executor.where_in_with_cond(order, 'child', children[depth], filter_cond(common_parents)).execute(),
+            executor.where_in(order, 'child', children[depth]).where_raw(filter_cond(common_parents)).execute(),
             order,
             {'depth': depth}
         )

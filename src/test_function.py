@@ -1,7 +1,6 @@
 from json_loader import generate_json
 from json_loader import print_structure
 import json
-from sql_executor import SqlBuilder
 
 
 if __name__ == '__main__':

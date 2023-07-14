@@ -39,49 +39,18 @@ class SqlExecutor:
 
         return self.select(select_columns).where(target_column, ' IN ', sql_array)
 
-    def where_in_with_cond(self,
-                           select_columns: list,
-                           target_column: str,
-                           target_array,
-                           cond: str):
-        target_sql = SqlExecutor.array_to_sql_array(target_array)
-
-        if target_sql is None:
-            return None
-
-        return self.select(select_columns).where(target_column, ' IN ', target_sql).where_raw(cond)
-
-    def where_in_with_one_cond(self,
-                               select_columns: list,
-                               target_column: str,
-                               target_array,
-                               cond_column: str,
-                               cond_value: str,
-                               cond_op='='):
-        target_sql = SqlExecutor.array_to_sql_array(target_array)
-
-        if target_sql is None:
-            return None
-
-        return self.select(select_columns).where(target_column, ' IN ', target_sql).where(cond_column, cond_op, cond_value)
-
     def where_in_with_exclude(self,
                               select: list,
                               target_column: str,
                               target_array,
                               exclude_column=None,
                               exclude_array=None):
-        target_sql = SqlExecutor.array_to_sql_array(target_array)
-
-        if target_sql is None:
-            return None
-
         exclude_sql = SqlExecutor.array_to_sql_array(exclude_array)
 
         if exclude_column is None or exclude_sql is None:
             return self.where_in(select, target_column, target_array)
 
-        return self.select(select).where(target_column, ' IN ', target_sql).where(exclude_column, ' NOT IN ', exclude_sql)
+        return self.where_in(select, target_column, target_array).where(exclude_column, ' NOT IN ', exclude_sql)
 
 
 class SqlBuilder:
