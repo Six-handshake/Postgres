@@ -48,7 +48,7 @@ def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (lis
         parents_with_children = merge_sets(parents[current_depth], children[current_depth])
         current_children = get_children(executor, parents_with_children, exclude_children)
         if le2 is None:
-            current_children = set(sorted(current_children)[:50])
+            current_children = set(sorted(current_children)[:20])
         exclude_children.update(current_children)
         children[current_depth + 1] = current_children
         if current_children is None:
