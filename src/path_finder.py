@@ -16,13 +16,13 @@ def find_all_links(executor: SqlExecutor, result_columns: list, le: str, depth=6
 
 
 def transform_children(executor: SqlExecutor, children: list, parents: list, order: list):
-    result = []
-    for i in range(len(children)):
+    result = get_le_data(executor, order, list(children[0])[0], {'depth': 0})
+    for i in range(1, len(children)):
         if len(children[i]) == 0:
             break
-        children[i] = set(sorted(children[i])[:100])
+        prev_parents = parents[i - 1]
         result.extend(map_data(
-            executor.where_in(order, 'child', children[i]).where_raw(f'(kind=2)').order_by('share').execute(),
+            executor.where_in(order, 'child', children[i]).where_raw(f'(kind=2 OR parent IN {SqlExecutor.array_to_sql_array(prev_parents)})').order_by('share').execute(),
             order,
             {'depth': i}
         ))
@@ -39,7 +39,7 @@ def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (lis
     while current_depth < depth and (le2 is None or le2 not in children[current_depth]):
         if len(children[current_depth]) == 0:
             break
-        parents[current_depth] = get_parents(executor, children[current_depth], parents[current_depth - 1])
+        parents[current_depth] = get_parents(executor, children[current_depth])
         exclude_parents.update(parents[current_depth])
 
         if current_depth + 1 == depth:
@@ -47,6 +47,8 @@ def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (lis
 
         parents_with_children = merge_sets(parents[current_depth], children[current_depth])
         current_children = get_children(executor, parents_with_children, exclude_children)
+        if le2 is None:
+            current_children = set(sorted(current_children)[:50])
         exclude_children.update(current_children)
         children[current_depth + 1] = current_children
         if current_children is None:
