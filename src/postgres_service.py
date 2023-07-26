@@ -2,12 +2,12 @@ import psycopg2 as pg
 import os
 from dotenv import load_dotenv
 from sql_executor import SqlExecutor
-from path_finder import find_paths
+from path_finder import find_paths, find_all_links
 
 
 load_dotenv()
 HOST = os.getenv('HOST')
-USER = os.getenv('USER')
+USER = os.getenv('IUSER')
 PORT = os.getenv('PORT')
 PASSWORD = os.getenv('PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
@@ -20,6 +20,18 @@ def get_links(le1: str, le2: str):
     executor = SqlExecutor(conn, execute, TABLE_NAME)
 
     data = find_paths(executor, ['child', 'parent', 'kind', 'date_begin', 'date_end', 'share'], le1, le2)
+
+    close_connection(conn)
+
+    return data
+
+
+def get_all_links(le: str):
+    conn = connect_to_db()
+
+    executor = SqlExecutor(conn, execute, TABLE_NAME)
+
+    data = find_all_links(executor, ['child', 'parent', 'kind', 'date_begin', 'date_end', 'share'], le)
 
     close_connection(conn)
 

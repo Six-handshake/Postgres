@@ -6,7 +6,7 @@ from sqlalchemy import text
 import os
 from dotenv import load_dotenv
 from sql_executor import SqlExecutor
-from path_finder import find_paths
+from path_finder import find_paths, find_all_links
 
 
 load_dotenv()
@@ -34,6 +34,27 @@ def get_links_via_ssh(le1: str, le2: str):
         executor = SqlExecutor(session, execute, TABLE_NAME)
 
         result = find_paths(executor, ['child', 'parent', 'kind', 'date_begin', 'date_end', 'share'], le1, le2)
+
+        close_connection_to_db(session)
+
+        return result
+
+
+def get_all_links_via_ssh(le: str):
+    """
+    get links between two legal entities
+    :param le: legal entity
+    :return: list of legal entities and individuals
+    """
+    with get_ssh_server() as server:
+        server.start()
+        print('Server connected via SSH')
+
+        session = connect_to_db(str(server.local_bind_port))
+
+        executor = SqlExecutor(session, execute, TABLE_NAME)
+
+        result = find_all_links(executor, ['child', 'parent', 'kind', 'date_begin', 'date_end', 'share'], le)
 
         close_connection_to_db(session)
 

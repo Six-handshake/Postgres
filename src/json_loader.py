@@ -1,12 +1,18 @@
 import json
 
-from ssh_tests import get_links_via_ssh
-from postgres_service import get_links
+from ssh_tests import get_links_via_ssh, get_all_links_via_ssh
+from postgres_service import get_links, get_all_links
 
 
 def generate_json(le1: str, le2: str):
     res = get_links(le1, le2)
     # res = get_links_via_ssh(le1, le2)
+    return json.dumps(res)
+
+
+def generate_for_single(le: str):
+    # res = get_all_links(le)
+    res = get_all_links_via_ssh(le)
     return json.dumps(res)
 
 

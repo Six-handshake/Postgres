@@ -20,7 +20,7 @@ class SqlExecutor:
         if len(array) == 0:
             return None
 
-        return '(' + ', '.join(array) + ')'
+        return '(' + ', '.join(map(lambda x: 'null' if x is None else str(x), array)) + ')'
 
     def raw_sql(self, sql: str):
         return self.execute(self.connection, sql)

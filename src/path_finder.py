@@ -10,25 +10,49 @@ def find_paths(executor: SqlExecutor, result_columns: list, le1: str, le2: str, 
     return link_objects(result)
 
 
+def find_all_links(executor: SqlExecutor, result_columns: list, le: str, depth=6):
+    children, parents, current_depth = try_get_links(executor, le, None, depth)
+    return link_objects(transform_children(executor, children, result_columns))
+
+
+def transform_children(executor: SqlExecutor, children: list, order: list):
+    result = []
+    for i in range(len(children)):
+        if len(children[i]) == 0:
+            break
+        result.extend(map_data(
+            executor.where_in(order, 'child', children[i]).order_by('share').execute(),
+            order,
+            {'depth': i}
+        ))
+    return result
+
+
 def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (list, list, int):
     children = [set() for _ in range(depth)]
     children[0] = {le1}
     parents = [set() for _ in range(depth)]
     current_depth = 0
-    while current_depth < depth and le2 not in children[current_depth]:
-        parents[current_depth] = get_parents(executor, children[current_depth], parents[current_depth - 1])
+    exclude_children = {le1}
+    exclude_parents = set()
+    while current_depth < depth and (le2 is None or le2 not in children[current_depth]):
+        if len(children[current_depth]) == 0:
+            break
+        parents[current_depth] = get_parents(executor, children[current_depth], exclude_parents)
+        exclude_parents.update(parents[current_depth])
 
         if current_depth + 1 == depth:
             break
 
         parents_with_children = merge_sets(parents[current_depth], children[current_depth])
-        current_children = get_children(executor, parents_with_children, children[current_depth])
+        current_children = get_children(executor, parents_with_children, exclude_children)
+        exclude_children.update(current_children)
         children[current_depth + 1] = current_children
         if current_children is None:
             return None
         current_depth += 1
 
-    if current_depth < depth and le2 in children[current_depth]:
+    if le2 is None or (current_depth < depth and le2 in children[current_depth]):
         return children, parents, current_depth
     return None
 
