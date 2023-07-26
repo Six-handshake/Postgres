@@ -11,8 +11,8 @@ def generate_json(le1: str, le2: str):
 
 
 def generate_for_single(le: str):
-    res = get_all_links(le)
-    # res = get_all_links_via_ssh(le)
+    # res = get_all_links(le)
+    res = get_all_links_via_ssh(le)
     return json.dumps(res)
 
 

@@ -21,7 +21,7 @@ def transform_children(executor: SqlExecutor, children: list, order: list):
         if len(children[i]) == 0:
             break
         result.extend(map_data(
-            executor.where_in(order, 'child', children[i]).order_by('share').execute(),
+            executor.where_in(order, 'child', children[i]).where_raw('kind=2').order_by('share').execute(),
             order,
             {'depth': i}
         ))
@@ -45,7 +45,7 @@ def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (lis
             break
 
         parents_with_children = merge_sets(parents[current_depth], children[current_depth])
-        current_children = set(sorted(list(get_children(executor, parents_with_children, exclude_children)))[:20])
+        current_children = set(sorted(list(get_children(executor, parents_with_children, exclude_children)))[:100])
         exclude_children.update(current_children)
         children[current_depth + 1] = current_children
         if current_children is None:
