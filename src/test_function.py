@@ -4,7 +4,7 @@ import json
 
 
 if __name__ == '__main__':
-    # res = json.loads(generate_json('73', '850'))
-    res = json.loads(generate_for_single('73'))
+    res = json.loads(generate_json('55', '576'))
+    # res = json.loads(generate_for_single('73'))
     print_structure(res)
     print(res)

@@ -12,16 +12,17 @@ def find_paths(executor: SqlExecutor, result_columns: list, le1: str, le2: str, 
 
 def find_all_links(executor: SqlExecutor, result_columns: list, le: str, depth=6):
     children, parents, current_depth = try_get_links(executor, le, None, depth + 1)
-    return link_objects(transform_children(executor, children, result_columns))
+    return link_objects(transform_children(executor, children, parents, result_columns))
 
 
-def transform_children(executor: SqlExecutor, children: list, order: list):
+def transform_children(executor: SqlExecutor, children: list, parents: list, order: list):
     result = []
     for i in range(len(children)):
         if len(children[i]) == 0:
             break
+        children[i] = set(sorted(children[i])[:100])
         result.extend(map_data(
-            executor.where_in(order, 'child', children[i]).where_raw('kind=2').order_by('share').execute(),
+            executor.where_in(order, 'child', children[i]).where_raw(f'(kind=2)').order_by('share').execute(),
             order,
             {'depth': i}
         ))
@@ -38,14 +39,14 @@ def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (lis
     while current_depth < depth and (le2 is None or le2 not in children[current_depth]):
         if len(children[current_depth]) == 0:
             break
-        parents[current_depth] = get_parents(executor, children[current_depth], exclude_parents)
+        parents[current_depth] = get_parents(executor, children[current_depth], parents[current_depth - 1])
         exclude_parents.update(parents[current_depth])
 
         if current_depth + 1 == depth:
             break
 
         parents_with_children = merge_sets(parents[current_depth], children[current_depth])
-        current_children = set(sorted(list(get_children(executor, parents_with_children, exclude_children)))[:100])
+        current_children = get_children(executor, parents_with_children, exclude_children)
         exclude_children.update(current_children)
         children[current_depth + 1] = current_children
         if current_children is None:
