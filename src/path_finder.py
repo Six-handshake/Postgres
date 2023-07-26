@@ -1,8 +1,9 @@
 from sql_executor import SqlExecutor
+import itertools
 
 
 def find_paths(executor: SqlExecutor, result_columns: list, le1: str, le2: str, depth=6):
-    links = try_get_links(executor, le1, le2, depth)
+    links = try_get_links(executor, le1, le2, depth + 1)
     if links is None:
         return None
     children, parents, depth = links
@@ -11,7 +12,7 @@ def find_paths(executor: SqlExecutor, result_columns: list, le1: str, le2: str, 
 
 
 def find_all_links(executor: SqlExecutor, result_columns: list, le: str, depth=6):
-    children, parents, current_depth = try_get_links(executor, le, None, depth)
+    children, parents, current_depth = try_get_links(executor, le, None, depth + 1)
     return link_objects(transform_children(executor, children, result_columns))
 
 
@@ -45,7 +46,7 @@ def try_get_links(executor: SqlExecutor, le1: str, le2: str, depth: int) -> (lis
             break
 
         parents_with_children = merge_sets(parents[current_depth], children[current_depth])
-        current_children = get_children(executor, parents_with_children, exclude_children)
+        current_children = set(itertools.islice(get_children(executor, parents_with_children, exclude_children), 100))
         exclude_children.update(current_children)
         children[current_depth + 1] = current_children
         if current_children is None:
